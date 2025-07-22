@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Neighborhood Explorer - Living Links</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/st.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="shortcut icon" href="/assets/images/nei.jpg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+  <style>
+    body {
+      background: #f5f6fa;
+    }
+    .explorer-container {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 2rem 1rem;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(23, 170, 170, 0.10), 0 1.5px 8px rgba(0,0,0,0.08);
+    }
+    .explorer-title {
+      text-align: center;
+      font-size: 2.2rem;
+      color: #17a;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      letter-spacing: 1px;
+    }
+    .explorer-search {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+      gap: 0.5rem;
+    }
+    .explorer-search input {
+      width: 320px;
+      padding: 0.7rem 1rem;
+      border: 1.5px solid #17a;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #f8fafc;
+      color: #222;
+      transition: border-color 0.3s;
+    }
+    .explorer-search input:focus {
+      border-color: #2e8b57;
+      outline: none;
+    }
+    .explorer-search button {
+      padding: 0.7rem 1.5rem;
+      background: linear-gradient(90deg, #17a 0%, #2e8b57 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .explorer-search button:hover {
+      background: linear-gradient(90deg, #2e8b57 0%, #17a 100%);
+    }
+    .explorer-flex {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      justify-content: space-between;
+    }
+    .explorer-listings {
+      flex: 1 1 340px;
+      min-width: 320px;
+    }
+    .explorer-listings h3 {
+      color: #2e8b57;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .explorer-card {
+      display: flex;
+      align-items: center;
+      background: #f8fafc;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(23,170,170,0.06);
+      padding: 1rem 1.2rem;
+      margin-bottom: 1rem;
+      gap: 1rem;
+      transition: box-shadow 0.2s;
+    }
+    .explorer-card:hover {
+      box-shadow: 0 4px 16px rgba(23,170,170,0.13);
+    }
+    .explorer-card .icon {
+      font-size: 2.2rem;
+      color: #17a;
+      min-width: 40px;
+      text-align: center;
+    }
+    .explorer-card .info {
+      flex: 1;
+    }
+    .explorer-card .info .name {
+      font-weight: 600;
+      font-size: 1.08rem;
+      color: #222;
+    }
+    .explorer-card .info .distance {
+      font-size: 0.98rem;
+      color: #555;
+      margin-top: 0.1rem;
+    }
+    .explorer-card .rating {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      margin-top: 0.2rem;
+    }
+    .explorer-card .star {
+      color: #fbc02d;
+      font-size: 1.1rem;
+    }
+    .explorer-map {
+      flex: 1 1 400px;
+      min-width: 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .explorer-map h3 {
+      color: #2e8b57;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .explorer-map iframe {
+      width: 100%;
+      min-height: 340px;
+      border: 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(23,170,170,0.06);
+    }
+    @media (max-width: 900px) {
+      .explorer-flex {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .explorer-map iframe {
+        min-height: 220px;
+      }
+    }
+    #properties .explorer-card {
+        display: flex;
+        align-items: start;
+        background: #f8fafc;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(23,170,170,0.06);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        gap: 1rem;
+        transition: box-shadow 0.2s;
+    }
+    #properties .explorer-card:hover {
+        box-shadow: 0 4px 16px rgba(23,170,170,0.13);
+    }
+    #properties .explorer-card .icon img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    #properties .explorer-card .info .name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: #222;
+        margin-bottom: 4px;
+    }
+    #properties .explorer-card .info .distance {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="explorer-container">
+    <div class="explorer-title">Neighborhood Explorer</div>
+    <form class="explorer-search" id="explorerSearch">
+      <input type="text" id="addressInput" placeholder="Enter address or area..." required>
+      <button type="submit">Explore</button>
+    </form>
+    <div class="explorer-flex">
+      <div class="explorer-listings">
+        <h3>Nearby Schools</h3>
+        <div id="schools"></div>
+        <h3>Nearby Hospitals</h3>
+        <div id="hospitals"></div>
+        <h3>Nearby Gyms</h3>
+        <div id="gyms"></div>
+        <h3>Nearby Properties</h3>
+        <div id="properties"></div>
+      </div>
+      <div class="explorer-map">
+        <h3>Street-level View</h3>
+        <div id="streetView" style="width: 100%; min-height: 340px; border-radius: 10px;"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Initialize street view
+    let panorama;
+    function initStreetView() {
+        // Default location (Ahmedabad)
+        const defaultLocation = { lat: 23.0225, lng: 72.5714 };
+        
+        panorama = new google.maps.StreetViewPanorama(
+            document.getElementById('streetView'),
+            {
+                position: defaultLocation,
+                pov: { heading: 165, pitch: 0 },
+                zoom: 1
+            }
+        );
+    }
+
+    // Initialize when page loads
+    google.maps.event.addDomListener(window, 'onload', initStreetView());
+
+    // Function to update street view based on address
+    async function updateStreetView(address) {
+        const geocoder = new google.maps.Geocoder();
+        
+        try {
+            const response = await new Promise((resolve, reject) => {
+                geocoder.geocode({ address: address }, (results, status) => {
+                    if (status === 'OK') {
+                        resolve(results[0]);
+                    } else {
+                        reject(status);
+                    }
+                });
+            });
+
+            const location = response.geometry.location;
+            
+            // Check if Street View is available at this location
+            const streetViewService = new google.maps.StreetViewService();
+            streetViewService.getPanorama({ location: location, radius: 50 }, (data, status) => {
+                if (status === 'OK') {
+                    // Update the street view with the new location
+                    panorama.setPosition(location);
+                    
+                    // Show success message
+                    alert('Location found! Showing street view.');
+                } else {
+                    // If no street view available, show the closest available view
+                    streetViewService.getPanorama({ location: location, radius: 1000 }, (data, status) => {
+                        if (status === 'OK') {
+                            panorama.setPosition(data.location.latLng);
+                            alert('Showing nearest available street view.');
+                        } else {
+                            alert('No street view available for this location.');
+                        }
+                    });
+                }
+            });
+
+        } catch (error) {
+            console.error('Geocoding error:', error);
+            alert('Could not find the specified location. Please try a different address.');
+        }
+    }
+
+    // Demo data for schools, hospitals, gyms
+    const demoData = {
+      schools: [
+        { name: "Sunrise Public School", distance: "0.5 km", rating: (4 + Math.random()).toFixed(1) },
+        { name: "Green Valley High", distance: "1.2 km", rating: (3.5 + Math.random()).toFixed(1) }
+      ],
+      hospitals: [
+        { name: "City Care Hospital", distance: "0.8 km", rating: (4 + Math.random()).toFixed(1) },
+        { name: "LifeLine Clinic", distance: "1.5 km", rating: (3.8 + Math.random()).toFixed(1) }
+      ],
+      gyms: [
+        { name: "FitZone Gym", distance: "0.6 km", rating: (4.2 + Math.random()).toFixed(1) },
+        { name: "Muscle Factory", distance: "1.1 km", rating: (3.9 + Math.random()).toFixed(1) }
+      ]
+    };
+
+    function renderList(type, icon, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      demoData[type].forEach(item => {
+        container.innerHTML += `
+          <div class="explorer-card">
+            <div class="icon"><i class="fa-solid fa-${icon}"></i></div>
+            <div class="info">
+              <div class="name">${item.name}</div>
+              <div class="distance">${item.distance} away</div>
+              <div class="rating">${renderStars(item.rating)} <span>${item.rating}</span></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function renderStars(rating) {
+      let stars = '';
+      let r = Math.round(rating);
+      for (let i = 0; i < 5; i++) {
+        stars += `<span class="star"><i class="fa-solid fa-star${i < r ? '' : '-o'}"></i></span>`;
+      }
+      return stars;
+    }
+
+    // Initial render
+    renderList('schools', 'school', 'schools');
+    renderList('hospitals', 'hospital', 'hospitals');
+    renderList('gyms', 'dumbbell', 'gyms');
+
+    function renderProperties(location) {
+        const container = document.getElementById('properties');
+        container.innerHTML = '';
+        
+        // Get properties from localStorage
+        const allProperties = JSON.parse(localStorage.getItem('properties') || '[]');
+        
+        // For demo, randomly select 2-3 properties as "nearby"
+        const nearbyProperties = allProperties
+            .sort(() => 0.5 - Math.random())
+            .slice(0, Math.floor(Math.random() * 2) + 2);
+        
+        nearbyProperties.forEach(property => {
+            const distance = (Math.random() * 2 + 0.5).toFixed(1); // Random distance 0.5-2.5 km
+            container.innerHTML += `
+                <div class="explorer-card">
+                    <div class="icon">
+                        <img src="${property.image}" alt="${property.title}" 
+                            style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                    </div>
+                    <div class="info">
+                        <div class="name">${property.title}</div>
+                        <div class="distance">${distance} km away</div>
+                        <div style="color: #666; font-size: 0.9em;">
+                            ${property.price} · ${property.bedrooms} beds · ${property.bathrooms} baths
+                        </div>
+                        <div style="color: #2e8b57; font-size: 0.9em; margin-top: 4px;">
+                            Listed by ${property.owner.name}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // Update the form submission handler
+    document.getElementById('explorerSearch').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const address = document.getElementById('addressInput').value;
+        
+        // Update street view
+        updateStreetView(address);
+        
+        // Update nearby properties
+        renderProperties(address);
+        
+        // Update other listings (schools, hospitals, gyms)
+        ['schools', 'hospitals', 'gyms'].forEach(type => {
+            demoData[type].forEach(item => item.rating = (3.5 + Math.random() * 1.5).toFixed(1));
+        });
+        renderList('schools', 'school', 'schools');
+        renderList('hospitals', 'hospital', 'hospitals');
+        renderList('gyms', 'dumbbell', 'gyms');
+    });
+
+    // Initial render of properties
+    renderProperties();
+  </script>
+</body>
+</html>

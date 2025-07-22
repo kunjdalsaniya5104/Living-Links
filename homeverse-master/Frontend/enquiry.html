@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Property Enquiry - Living Links</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Use your main CSS file for styling -->
+  <link rel="shortcut icon" href="/assets/images/enq.jpg" type="image/svg+xml">
+ 
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+        line-height: 1.6;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+            
+
+        margin: 0;
+        padding: 20px;
+        }
+        .add-listing-container {
+        background: #fff;
+        width: 100%;
+        max-width: 480px;
+        margin: 0 auto;
+        text-align: left;
+            
+        border: 1px solid #ccc;
+            
+
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+        }
+        label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+        margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="tel"],
+        input[type="email"],
+        select {
+        width: calc(100% - 20px);
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        }
+        button {
+        background-color: orange;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1.2em;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+
+        }
+        button:hover {
+        background-color: #218838;
+        transition: background-color 0.3s ease;
+
+        }
+        .message {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #e7f3fe;
+        border: 1px solid #b3d7ff;
+        border-radius: 5px;
+        color: #31708f;
+        display: none;
+        font-size: 1.2em;
+        }
+        .success {
+        display: block;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+        
+        color: green;
+        }
+        .error {
+            display: block;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+</style>
+ 
+</head>
+<body>
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!checkAuth('enquiry.html')) {
+            return;
+        }
+
+        // Price range slider update
+        const priceRange = document.getElementById('priceRange');
+        const priceValue = document.getElementById('priceValue');
+        
+        function updatePriceValue() {
+            const value = Number(priceRange.value).toLocaleString('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            });
+            priceValue.textContent = value;
+        }
+
+        priceRange.addEventListener('input', updatePriceValue);
+        updatePriceValue(); // Initialize value
+
+        // Form handler
+        document.getElementById('enquiryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const messageDiv = document.getElementById('message');
+            const submitButton = this.querySelector('button[type="submit"]');
+            
+            try {
+                // Disable submit button
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+
+                // Validate form
+                const formData = {
+                    name: document.getElementById('name').value.trim(),
+                    city: document.getElementById('city').value.trim(),
+                    state: document.getElementById('state').value.trim(),
+                    country: document.getElementById('country').value.trim(),
+                    searching: document.getElementById('searching').value,
+                    priceRange: document.getElementById('priceRange').value,
+                    contact: document.getElementById('contact').value.trim(),
+                    email: document.getElementById('email').value.trim()
+                };
+
+                // Check if any field is empty
+                for (let key in formData) {
+                    if (!formData[key]) {
+                        throw new Error('Please fill in all fields');
+                    }
+                }
+
+                // Send the data to the server
+                const response = await fetch('http://localhost:3000/submit-enquiry', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Submission failed');
+                }
+
+                if (data.success) {
+                    messageDiv.textContent = "Thank you! Your enquiry has been submitted successfully.";
+                    messageDiv.className = 'message success';
+                    messageDiv.style.display = 'block';
+                    
+                    // Reset form
+                    this.reset();
+                    updatePriceValue();
+
+                    // Redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Submission failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                messageDiv.textContent = error.message || "Failed to submit enquiry. Please try again.";
+                messageDiv.className = 'message error';
+                messageDiv.style.display = 'block';
+            } finally {
+                // Re-enable submit button
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Enquiry';
+            }
+        });
+    });
+  </script>
+  <div class="add-listing-container" style="max-width:480px;">
+    <h2>Property Enquiry</h2>
+    <div id="message" class="message"></div>
+    <form id="enquiryForm" autocomplete="off">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="city">City</label>
+      <input type="text" id="city" name="city" required>
+
+      <label for="state">State</label>
+      <input type="text" id="state" name="state" required>
+
+      <label for="country">Country</label>
+      <input type="text" id="country" name="country" required>
+
+      <label for="searching">What are you searching for?</label>
+      <select id="searching" name="searching" required>
+        <option value="">Select</option>
+        <option value="Buy">Buy</option>
+        <option value="Rent">Rent</option>
+        <option value="Commercial">Commercial</option>
+        <option value="Plot">Plot</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label for="priceRange">Price Range (₹)</label>
+      <div style="display:flex;align-items:center;gap:1em;">
+        <input type="range" id="priceRange" name="priceRange" min="10000" max="10000000" step="5000" value="30000" style="flex:1;">
+        <span id="priceValue" style="min-width:100px;">₹ 1,000,000</span>
+      </div>
+
+      <label for="contact">Contact Number</label>
+      <input type="tel" id="contact" name="contact" pattern="[0-9]{10,15}" required placeholder="Enter your number">
+
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
+
+      <button type="submit">Submit Enquiry</button>
+    </form>
+  </div>
+</body>
+</html>

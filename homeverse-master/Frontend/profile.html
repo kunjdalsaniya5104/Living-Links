@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Living Links</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" href="./assets/images/profile.jpg" type="image/svg+xml">
+    <style>
+        .profile-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        .profile-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-info h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-info p {
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-tabs {
+            display: flex;
+            gap: 1rem;
+            margin: 2rem 0;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            color: #666;
+            border: none;
+            background: none;
+            position: relative;
+        }
+
+        .tab.active {
+            color: #ff8c00;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #ff8c00;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2rem 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .edit-profile-form {
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #666;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .btn-save {
+            background: #ff8c00;
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-save:hover {
+            background: #ff7600;
+        }
+
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            gap: 2rem;
+            
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left:8rem;
+            margin-top: -2.7rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-image">
+                <img src="./assets/images/profile.jpg" alt="Profile" id="profileImage">
+            </div>
+            <div class="profile-info">
+                <h1 id="userName">Loading...</h1>
+                <p id="userEmail">Loading...</p>
+                <p id="joinDate">Member since: Loading...</p>
+                <div style="margin-top: 1rem;">
+                    <button class="btn-save" onclick="window.location.href='index.html'">Home</button>
+                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-tabs">
+            <button class="tab active" onclick="showTab('myListings')">My Listings</button>
+            <button class="tab" onclick="showTab('myEnquiries')">My Enquiries</button>
+            <button class="tab" onclick="showTab('editProfile')">Edit Profile</button>
+        </div>
+
+        <div id="myListings" class="tab-content active">
+            <div class="property-grid" id="listingsGrid">
+                <!-- Properties will be loaded here -->
+            </div>
+        </div>
+
+        <div id="myEnquiries" class="tab-content">
+            <div id="enquiriesList">
+                <!-- Enquiries will be loaded here -->
+            </div>
+        </div>
+
+        <div id="editProfile" class="tab-content">
+            <form class="edit-profile-form" id="editProfileForm">
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" name="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password (leave blank to keep current)</label>
+                    <input type="password" id="newPassword" name="newPassword">
+                </div>
+                <button type="submit" class="btn-save">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+       
+        // Check authentication
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!localStorage.getItem('isLoggedIn')) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            loadUserProfile();
+            loadUserListings();
+            loadUserEnquiries();
+        });
+        
+
+        function showTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        async function loadUserProfile() {
+            try {
+                const response = await fetch('http://localhost:3000/user/profile', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+
+                // Get username from localStorage
+                const username = localStorage.getItem('username');
+                const email = localStorage.getItem('email');
+
+                if (data.success) {
+                    // Update profile name with username from localStorage if available
+                    document.getElementById('userName').textContent = username || data.user.username;
+                    
+                    document.getElementById('username').textContent = username;
+
+                    localStorage.setItem('username' , username);
+                    document.getElementById('userEmail').textContent = email || data.user.email;
+                    document.getElementById('joinDate').textContent = 
+                        `Member since: ${new Date(data.user.created_at).toLocaleDateString()}`;
+                        
+
+                    // Pre-fill edit form
+                    document.getElementById('fullName').value = username || data.user.username;
+                    document.getElementById('email').value = data.user.email;
+                    document.getElementById('phone').value = data.user.phone || '';
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                // Fallback to localStorage if server request fails
+                const username = localStorage.getItem('username');
+                if (username) {
+                    document.getElementById('userName').textContent = username;
+                    document.getElementById('fullName').value = username;
+                }
+            }
+        }
+
+        async function loadUserListings() {
+            try {
+                const response = await fetch('http://localhost:3000/user/listings', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+
+                const grid = document.getElementById('listingsGrid');
+                if (data.success && data.listings.length > 0) {
+                    grid.innerHTML = data.listings.map(listing => `
+                        <div class="property-card">
+                            <img src="${listing.image}" alt="${listing.title}">
+                            <h3>${listing.title}</h3>
+                            <p>${listing.price}</p>
+                            <p>${listing.location}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<p>No listings found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading listings:', error);
+            }
+        }
+
+        async function loadUserEnquiries() {
+            try {
+                const response = await fetch('http://localhost:3000/user/enquiries', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+
+                const list = document.getElementById('enquiriesList');
+                if (data.success && data.enquiries.length > 0) {
+                    list.innerHTML = data.enquiries.map(enquiry => `
+                        <div class="enquiry-card">
+                            <h3>${enquiry.property_type}</h3>
+                            <p>Location: ${enquiry.city}, ${enquiry.state}</p>
+                            <p>Price Range: ₹${enquiry.price_range}</p>
+                            <p>Status: ${enquiry.status}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = '<p>No enquiries found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading enquiries:', error);
+            }
+        }
+
+        document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newUsername = document.getElementById('fullName').value;
+            
+            try {
+                const response = await fetch('http://localhost:3000/user/update-profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        username: newUsername,
+                        email: document.getElementById('email').value,
+                        phone: document.getElementById('phone').value,
+                        password: document.getElementById('newPassword').value || undefined
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    // Update localStorage with new username
+                    localStorage.setItem('username', newUsername);
+                    alert('Profile updated successfully');
+                    loadUserProfile();
+                } else {
+                    alert(data.message || 'Failed to update profile');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('Failed to update profile');
+            }
+        });
+
+        async function handleLogout() {
+            try {
+                const response = await fetch('http://localhost:3000/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('username');
+                    window.location.href = 'login.html';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+    </script>
+</body>
+</html> 
